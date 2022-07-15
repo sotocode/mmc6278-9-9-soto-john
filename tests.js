@@ -124,6 +124,9 @@ function runTests() {
   const expect = chai.expect;
 
   describe("Weather App", function () {
+    const getLocalTime = sec => new Date(sec * 1000)
+      .toLocaleTimeString('en-US', {hour: 'numeric', minute: 'numeric'})
+      .toLowerCase()
     const weatherInfo = {
       "coord": {
         "lon": 139.6917,
@@ -171,9 +174,9 @@ function runTests() {
     const getWeatherHTML = () =>
       document.getElementById('weather-app').innerHTML.toLowerCase()
 
-    async function stubWeatherFetch(returnJSON, query) {
+    async function stubWeatherFetch(returnJSON, query, status) {
       const fetchStub = sinon.stub(window, 'fetch')
-        .resolves({ json: sinon.stub().resolves(returnJSON) })
+        .resolves({ json: sinon.stub().resolves(returnJSON), status: status || 200 })
       document.querySelector('input').value = query
       document.querySelector('#weather-app form button').click()
       expect(fetchStub.called).to.be.true
@@ -200,7 +203,7 @@ function runTests() {
 
     it('should display "Location Not Found" if no location is found', async function () {
       sinon.restore()
-      await stubWeatherFetch({ data: { cod: 404 } })
+      await stubWeatherFetch({ data: { cod: 404 } }, 'askjdnfks', 404)
       expect(getWeatherHTML().includes('location not found')).to.be.true
     })
     it('should clear the input value after searching for weather data', () => {
@@ -237,7 +240,7 @@ function runTests() {
       expect(getWeatherHTML().includes('52.74')).to.be.true
     })
     it('should display updated time', function () {
-      expect(getWeatherHTML().includes('2:12 am')).to.be.true
+      expect(getWeatherHTML().includes(getLocalTime(weatherInfo.dt))).to.be.true
     })
     it("should not display previous location's weather info after searching for a new location", async () => {
       sinon.restore()
@@ -278,7 +281,7 @@ function runTests() {
       expect(getWeatherHTML().includes('few clouds')).to.be.false
       expect(getWeatherHTML().includes('55.42')).to.be.false
       expect(getWeatherHTML().includes('52.74')).to.be.false
-      expect(getWeatherHTML().includes('2:12 am')).to.be.false
+      expect(getWeatherHTML().includes(getLocalTime(weatherInfo.dt))).to.be.false
 
       expect(weatherHTML.includes('honolulu')).to.be.true
       expect(weatherHTML.includes('us')).to.be.true
@@ -288,7 +291,7 @@ function runTests() {
       expect(getWeatherHTML().includes('broken clouds')).to.be.true
       expect(getWeatherHTML().includes('73.67')).to.be.true
       expect(getWeatherHTML().includes('74.88')).to.be.true
-      expect(getWeatherHTML().includes('2:57 am')).to.be.true
+      expect(getWeatherHTML().includes(getLocalTime(1647845849))).to.be.true
     })
   });
 
